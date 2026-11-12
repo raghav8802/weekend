@@ -1,0 +1,8 @@
+anthropic>=2.8.0
+faster-whisper>=1.2.1
+yt-dlp>=2026.10.26
+google-api-python-client>=2.202.0
+google-auth-oauthlib>=1.5.0
+requests>=2.32
+PyYAML>=6.0
+numpy>=2.0

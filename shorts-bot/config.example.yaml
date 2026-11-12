@@ -1,0 +1,40 @@
+# Copy to config.yaml. Anything you leave out uses the default in bot/config.py.
+
+sources:
+  # YouTube channel IDs (start with UC...). Use YOUR channel or channels that gave you permission.
+  channels:
+    # - UCxxxxxxxxxxxxxxxxxxxxxx
+  title_keywords: ["gta 6", "gta vi", "gta6"]
+  max_video_age_days: 3
+  inbox_dir: inbox          # drop your own recordings here
+
+detect:
+  candidates: 12            # more = better picks, slightly more Whisper time + Claude cost
+
+transcribe:
+  model: small              # use "base" on a weak CPU, "medium" if you have a GPU
+  language: null            # "en", "hi", ... or null to auto-detect
+
+brain:
+  model: claude-opus-5-5
+  effort: medium
+  clips_per_video: 4
+  min_clip_seconds: 15
+  max_clip_seconds: 55
+  vision_frames: 3          # set 0 to save ~30% on Claude cost (it then judges by speech + signal only)
+  language: English         # language for hooks, titles, captions (e.g. Hinglish)
+  base_hashtags: ["#GTA6", "#GTAVI", "#GTA", "#Gaming"]
+
+render:
+  fg_zoom: 1.25
+  font: Arial
+
+publish:
+  youtube:
+    enabled: true
+    privacy: public         # start with "private" to review the first few uploads
+  instagram:
+    enabled: true
+  schedule:
+    timezone: Asia/Kolkata
+    times: ["11:00", "16:00", "20:30"]

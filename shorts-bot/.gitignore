@@ -1,0 +1,6 @@
+data/
+inbox/
+.env
+config.yaml
+client_secret*.json
+__pycache__/
