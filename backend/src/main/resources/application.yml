@@ -1,0 +1,31 @@
+spring:
+  application:
+    name: weekend-backend
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/weekend}
+    username: ${DB_USER:weekend}
+    password: ${DB_PASSWORD:weekend}
+  flyway:
+    enabled: true
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: ${PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+app:
+  # Shown to guests in the WhatsApp message. Change once the brand name is final.
+  brand-name: ${BRAND_NAME:Weekend}
+  # Admin login for the pilot. Always set ADMIN_PASSWORD in any shared or deployed environment.
+  admin:
+    username: ${ADMIN_USER:admin}
+    password: ${ADMIN_PASSWORD:change-me}
+  leads:
+    # Contact requests allowed per IP address per hour (stops scrapers collecting host numbers).
+    max-per-hour-per-ip: ${LEADS_PER_HOUR:20}

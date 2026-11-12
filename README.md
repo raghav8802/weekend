@@ -1,0 +1,94 @@
+# Weekend: farmhouse marketplace pilot (Delhi NCR)
+
+Pilot for the New Year 2027 launch. Guests find verified farmhouses and contact the host on WhatsApp or by phone.
+The platform takes **no payments** in this pilot: every booking is agreed directly between guest and host.
+
+| Part | Stack | Folder |
+| --- | --- | --- |
+| API | Spring Boot 3.5 (Java 21), Spring JDBC, Flyway | `backend/` |
+| Database | PostgreSQL 16 (needs the `btree_gist` extension) | `backend/src/main/resources/db/migration` |
+| Web app | React 19 + TypeScript + Vite | `frontend/` |
+
+## What the pilot does
+
+- **Guests** (`/`): search by area, date, nights and group size; open a listing; fill in name, date and guests;
+  tap *WhatsApp the host* or *Call the host*. The enquiry is logged first, then WhatsApp opens with a message that
+  carries a reference such as `WK-7QH3XM`.
+- **Hosts** (`/host/<secret link>`): see enquiries and how many became bookings, block dates, and answer
+  "did this enquiry become a booking?". A *yes* blocks the dates automatically.
+- **Team** (`/admin`): add a farmhouse after the property visit (hidden until marked *verified, go live*),
+  edit it, pause it, copy the host's secret link, make a new link, and see every lead.
+
+Safeguards already in place:
+
+- The host's number is never in listing data; it is only returned inside the contact link after an enquiry is logged.
+- Contact requests are limited per IP address per hour (`LEADS_PER_HOUR`, default 20) to stop number scraping.
+- Overlapping blocked dates are refused by the database itself (exclusion constraint).
+- Listings must show a price; host numbers must be valid Indian mobiles; photo links must be `https://`.
+
+Left for later phases (see the business plan): masked numbers (Exotel), OTP login and contact credits, protected
+booking with payments, subscriptions, boosts, add-ons.
+
+## Run it locally
+
+Create a database (once):
+
+```bash
+sudo -u postgres psql -c "CREATE USER weekend WITH PASSWORD 'weekend' SUPERUSER;" -c "CREATE DATABASE weekend OWNER weekend;" -c "CREATE DATABASE weekend_test OWNER weekend;"
+```
+
+The migration creates the `btree_gist` extension, which needs a superuser or a pre-created extension. In production,
+run `CREATE EXTENSION btree_gist;` as an admin once and give the app user normal rights.
+
+Start the API (port 8080):
+
+```bash
+cd backend && ADMIN_PASSWORD=choose-a-password ./gradlew bootRun
+```
+
+Start the web app (port 5173, forwards `/api` to 8080):
+
+```bash
+cd frontend && npm install && npm run dev
+```
+
+Open http://localhost:5173 and log in at http://localhost:5173/admin as `admin` with your password.
+
+## Configuration
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `DB_URL` | `jdbc:postgresql://localhost:5432/weekend` | Database |
+| `DB_USER` / `DB_PASSWORD` | `weekend` / `weekend` | Database login |
+| `ADMIN_USER` / `ADMIN_PASSWORD` | `admin` / `change-me` | Team login. **Always set the password.** |
+| `BRAND_NAME` | `Weekend` | Name used in the WhatsApp message |
+| `LEADS_PER_HOUR` | `20` | Contact requests allowed per IP per hour |
+| `PORT` | `8080` | API port |
+
+Behind a load balancer, also set `server.forward-headers-strategy=native` so the rate limit sees the guest's real IP.
+
+## Tests
+
+```bash
+cd backend && ./gradlew test
+```
+
+The tests use a real PostgreSQL database `weekend_test` (override with `TEST_DB_URL`); it is wiped before each test.
+
+```bash
+cd frontend && npm run build && npm run lint
+```
+
+## API summary
+
+| Method and path | Who | Purpose |
+| --- | --- | --- |
+| `GET /api/properties?area=&date=&nights=&guests=` | Public | Search live farmhouses free on those dates |
+| `GET /api/areas` | Public | Areas with live listings |
+| `GET /api/properties/{slug}` | Public | One listing (no host contact details) |
+| `GET /api/properties/{slug}/blocked-dates?from=&to=` | Public | Booked days, for the calendar |
+| `POST /api/properties/{slug}/leads` | Public | Log an enquiry; returns the WhatsApp or `tel:` link |
+| `GET /api/host/{token}` | Host link | Summary, enquiries, blocked dates |
+| `POST /api/host/{token}/blocks`, `DELETE …/blocks/{id}` | Host link | Block or unblock dates |
+| `POST /api/host/{token}/leads/{id}/outcome` | Host link | Mark an enquiry booked or not booked |
+| `/api/admin/**` | Team login | Manage listings, statuses, host links, leads |
