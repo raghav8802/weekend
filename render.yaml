@@ -1,0 +1,30 @@
+# Render Blueprint: one free web service (site + API) and one free Postgres database.
+# In Render: New > Blueprint > pick this repository and branch.
+services:
+  - type: web
+    name: weekend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: weekend-db
+          property: connectionString
+      # Render creates a random admin password; find it under the service's Environment tab.
+      - key: ADMIN_PASSWORD
+        generateValue: true
+      - key: ADMIN_USER
+        value: admin
+      - key: BRAND_NAME
+        value: Weekend
+      # Use the guest's real IP for the enquiry rate limit behind Render's proxy.
+      - key: SERVER_FORWARD_HEADERS_STRATEGY
+        value: native
+
+databases:
+  - name: weekend-db
+    plan: free
+    databaseName: weekend
+    user: weekend

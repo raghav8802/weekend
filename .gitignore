@@ -16,3 +16,6 @@ frontend/dist/
 # Local secrets
 .env
 .env.*
+
+# Built React app copied into the jar
+backend/src/main/resources/static/
