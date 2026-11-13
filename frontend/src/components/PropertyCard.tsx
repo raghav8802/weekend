@@ -1,25 +1,39 @@
 import { Link } from 'react-router-dom'
 import type { PublicProperty } from '../api'
-import { headlinePrice } from '../format'
+import { inr } from '../format'
+import { CardPhotos } from './Photos'
 
-export function Photo({ url, alt, className }: { url?: string; alt: string; className?: string }) {
-  if (!url) return <div className={`photo photo-empty ${className ?? ''}`} aria-label={alt} />
-  return <img className={`photo ${className ?? ''}`} src={url} alt={alt} loading="lazy" />
+function price(p: PublicProperty) {
+  if (p.dayUsePriceMin != null) return { amount: inr(p.dayUsePriceMin), unit: 'day-use' }
+  if (p.nightPriceMin != null) return { amount: inr(p.nightPriceMin), unit: 'night' }
+  return null
 }
 
 export function PropertyCard({ p, query }: { p: PublicProperty; query?: string }) {
+  const pr = price(p)
+  const facts = [`Up to ${p.maxGuests} guests`, p.bedrooms > 0 ? `${p.bedrooms} ${p.bedrooms === 1 ? 'room' : 'rooms'}` : null]
+    .filter(Boolean)
+    .join(' · ')
   return (
     <Link to={`/farmhouse/${p.slug}${query ? `?${query}` : ''}`} className="card">
-      <Photo url={p.photoUrls[0]} alt={p.name} />
-      <div className="card-body">
-        <div className="card-title">
-          <h3>{p.name}</h3>
-          {p.verified && <span className="badge">Verified</span>}
+      <div className="card-media">
+        <CardPhotos urls={p.photoUrls} seed={p.slug} alt={p.name} />
+        <div className="card-tags">
+          {p.verified && <span className="tag">Verified</span>}
+          {p.hasPool && <span className="tag">Pool</span>}
         </div>
-        <p className="muted">
-          {p.area} · up to {p.maxGuests} guests{p.hasPool ? ' · pool' : ''}
-        </p>
-        <p className="price">{headlinePrice(p)}</p>
+      </div>
+      <div className="card-body">
+        <div className="card-line">
+          <h3>{p.name}</h3>
+        </div>
+        <p className="muted">{p.area}</p>
+        <p className="muted">{facts}</p>
+        {pr && (
+          <p className="card-price">
+            <strong>{pr.amount}</strong> <span>{pr.unit}</span>
+          </p>
+        )}
       </div>
     </Link>
   )

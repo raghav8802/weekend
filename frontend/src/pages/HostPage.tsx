@@ -23,8 +23,8 @@ export function HostPage() {
 
   useEffect(load, [load])
 
-  if (error) return <p className="error">{error}</p>
-  if (!view) return <p className="muted">Loading…</p>
+  if (error) return <div className="container staff"><p className="alert alert-error">{error}</p></div>
+  if (!view) return <div className="container staff"><p className="muted">Loading…</p></div>
 
   async function outcome(lead: Lead, status: 'BOOKED' | 'NOT_BOOKED') {
     try {
@@ -45,7 +45,7 @@ export function HostPage() {
   const { property, summary, leads, blocks } = view
 
   return (
-    <div className="host">
+    <div className="container staff host">
       <h1>{property.name}</h1>
       <p className="muted">
         Your host page · keep this link private
@@ -67,9 +67,9 @@ export function HostPage() {
         </div>
       </div>
 
-      {notice && <p className="notice">{notice}</p>}
+      {notice && <p className="alert alert-ok">{notice}</p>}
 
-      <section>
+      <section className="panel">
         <h2>Block dates</h2>
         <p className="muted small">Booked offline or not available? Block the dates so guests don’t ask for them.</p>
         <BlockForm
@@ -92,7 +92,7 @@ export function HostPage() {
                 </span>
                 <button
                   type="button"
-                  className="btn btn-link"
+                  className="btn btn-ghost"
                   onClick={async () => {
                     await unblock(token, b.id)
                     load()
@@ -106,7 +106,7 @@ export function HostPage() {
         )}
       </section>
 
-      <section>
+      <section className="panel">
         <h2>Enquiries</h2>
         <p className="muted small">Did a guest book after contacting you? Tell us — it blocks the dates for you.</p>
         {leads.length === 0 ? (
@@ -144,12 +144,12 @@ export function HostPage() {
                     <td>
                       {l.status === 'NEW' ? (
                         <div className="row">
-                          <button type="button" className="btn btn-small" onClick={() => outcome(l, 'BOOKED')}>
+                          <button type="button" className="btn btn-sm btn-dark" onClick={() => outcome(l, 'BOOKED')}>
                             Yes
                           </button>
                           <button
                             type="button"
-                            className="btn btn-small btn-secondary"
+                            className="btn btn-sm btn-outline"
                             onClick={() => outcome(l, 'NOT_BOOKED')}
                           >
                             No
@@ -206,10 +206,10 @@ function BlockForm({ onSave }: { onSave: (from: string, to: string, note?: strin
         Note
         <input placeholder="e.g. family function" maxLength={200} value={note} onChange={(e) => setNote(e.target.value)} />
       </label>
-      <button type="submit" className="btn btn-primary">
+      <button type="submit" className="btn btn-brand">
         Block
       </button>
-      {error && <p className="error">{error}</p>}
+      {error && <p className="alert alert-error">{error}</p>}
     </form>
   )
 }

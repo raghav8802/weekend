@@ -63,7 +63,7 @@ function Login({ onLogin }: { onLogin: (auth: string) => void }) {
   }
 
   return (
-    <form className="login" onSubmit={submit}>
+    <form className="panel login" onSubmit={submit}>
       <h1>Team login</h1>
       <label>
         Username
@@ -73,8 +73,8 @@ function Login({ onLogin }: { onLogin: (auth: string) => void }) {
         Password
         <input name="password" type="password" required autoComplete="current-password" />
       </label>
-      {error && <p className="error">{error}</p>}
-      <button className="btn btn-primary" type="submit">
+      {error && <p className="alert alert-error">{error}</p>}
+      <button className="btn btn-brand" type="submit">
         Log in
       </button>
     </form>
@@ -85,6 +85,7 @@ function Dashboard({ auth, onLogout }: { auth: string; onLogout: () => void }) {
   const [tab, setTab] = useState<'farmhouses' | 'leads'>('farmhouses')
   const [properties, setProperties] = useState<AdminProperty[]>([])
   const [leads, setLeads] = useState<Lead[]>([])
+  const [loaded, setLoaded] = useState(false)
   const [editing, setEditing] = useState<AdminProperty | 'new' | null>(null)
   const [message, setMessage] = useState<string | null>(null)
 
@@ -97,8 +98,13 @@ function Dashboard({ auth, onLogout }: { auth: string; onLogout: () => void }) {
   )
 
   const load = useCallback(() => {
-    adminList(auth).then(setProperties).catch(handle)
-    adminLeads(auth).then(setLeads).catch(handle)
+    Promise.all([adminList(auth), adminLeads(auth)])
+      .then(([p, l]) => {
+        setProperties(p)
+        setLeads(l)
+        setLoaded(true)
+      })
+      .catch(handle)
   }, [auth, handle])
 
   useEffect(load, [load])
@@ -152,29 +158,29 @@ function Dashboard({ auth, onLogout }: { auth: string; onLogout: () => void }) {
   }
 
   return (
-    <div className="admin">
+    <div className="container staff admin">
       <div className="row space-between">
         <div className="segmented">
           <button type="button" className={tab === 'farmhouses' ? 'active' : ''} onClick={() => setTab('farmhouses')}>
-            Farmhouses ({properties.length})
+            Farmhouses{loaded ? ` (${properties.length})` : ''}
           </button>
           <button type="button" className={tab === 'leads' ? 'active' : ''} onClick={() => setTab('leads')}>
-            Leads ({leads.length})
+            Leads{loaded ? ` (${leads.length})` : ''}
           </button>
         </div>
         <div className="row">
           {tab === 'farmhouses' && (
-            <button type="button" className="btn btn-primary" onClick={() => setEditing('new')}>
+            <button type="button" className="btn btn-brand" onClick={() => setEditing('new')}>
               Add farmhouse
             </button>
           )}
-          <button type="button" className="btn btn-link" onClick={onLogout}>
+          <button type="button" className="btn btn-ghost" onClick={onLogout}>
             Log out
           </button>
         </div>
       </div>
 
-      {message && <p className="notice">{message}</p>}
+      {message && <p className="alert alert-ok">{message}</p>}
 
       {tab === 'farmhouses' ? (
         <div className="table-wrap">
@@ -211,22 +217,22 @@ function Dashboard({ auth, onLogout }: { auth: string; onLogout: () => void }) {
                   </td>
                   <td>
                     <div className="row wrap-row">
-                      <button type="button" className="btn btn-small btn-secondary" onClick={() => setEditing(p)}>
+                      <button type="button" className="btn btn-sm btn-outline" onClick={() => setEditing(p)}>
                         Edit
                       </button>
                       {p.status === 'LIVE' ? (
-                        <button type="button" className="btn btn-small btn-secondary" onClick={() => setStatus(p, 'PAUSED')}>
+                        <button type="button" className="btn btn-sm btn-outline" onClick={() => setStatus(p, 'PAUSED')}>
                           Pause
                         </button>
                       ) : (
-                        <button type="button" className="btn btn-small" onClick={() => setStatus(p, 'LIVE')}>
+                        <button type="button" className="btn btn-sm btn-dark" onClick={() => setStatus(p, 'LIVE')}>
                           Verified · go live
                         </button>
                       )}
-                      <button type="button" className="btn btn-small btn-secondary" onClick={() => copyHostLink(p)}>
+                      <button type="button" className="btn btn-sm btn-outline" onClick={() => copyHostLink(p)}>
                         Copy host link
                       </button>
-                      <button type="button" className="btn btn-small btn-link" onClick={() => rotate(p)}>
+                      <button type="button" className="btn btn-sm btn-ghost" onClick={() => rotate(p)}>
                         New link
                       </button>
                     </div>
@@ -236,7 +242,7 @@ function Dashboard({ auth, onLogout }: { auth: string; onLogout: () => void }) {
               {properties.length === 0 && (
                 <tr>
                   <td colSpan={4} className="muted">
-                    No farmhouses yet. Add the first one after the property visit.
+                    {loaded ? 'No farmhouses yet. Add the first one after the property visit.' : 'Loading…'}
                   </td>
                 </tr>
               )}
@@ -282,7 +288,7 @@ function Dashboard({ auth, onLogout }: { auth: string; onLogout: () => void }) {
               {leads.length === 0 && (
                 <tr>
                   <td colSpan={5} className="muted">
-                    No leads yet.
+                    {loaded ? 'No leads yet.' : 'Loading…'}
                   </td>
                 </tr>
               )}
@@ -405,12 +411,12 @@ function PropertyEditor({
     <label>
       {label}
       <input value={draft[key] as string} onChange={set(key)} {...props} />
-      {fields[key] && <span className="error small">{fields[key]}</span>}
+      {fields[key] && <span className="field-error">{fields[key]}</span>}
     </label>
   )
 
   return (
-    <form className="editor" onSubmit={save}>
+    <form className="container staff editor" onSubmit={save}>
       <h1>{existing ? `Edit ${existing.name}` : 'Add a farmhouse'}</h1>
       {!existing && (
         <p className="muted small">New farmhouses stay hidden until you mark them verified after the visit.</p>
@@ -466,20 +472,20 @@ function PropertyEditor({
         {field('hostPhone', 'Mobile number', { required: true, inputMode: 'tel', placeholder: '+91 98xxx xxxxx' })}
       </fieldset>
 
-      {error && <p className="error">{error}</p>}
+      {error && <p className="alert alert-error">{error}</p>}
       {Object.entries(fields)
         .filter(([k]) => !(k in draft))
         .map(([k, v]) => (
-          <p key={k} className="error">
+          <p key={k} className="alert alert-error">
             {v}
           </p>
         ))}
 
       <div className="row">
-        <button type="submit" className="btn btn-primary" disabled={saving}>
+        <button type="submit" className="btn btn-brand" disabled={saving}>
           {saving ? 'Saving…' : 'Save'}
         </button>
-        <button type="button" className="btn btn-secondary" onClick={() => onDone(null)}>
+        <button type="button" className="btn btn-outline" onClick={() => onDone(null)}>
           Cancel
         </button>
       </div>
